@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battery Daily Log Sheet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap');
+  :root {
+    --bg:#f0f2f5; --white:#fff; --primary:#0a2540; --accent:#ff6b00;
+    --accent2:#00b4d8; --success:#2d6a4f; --warn:#e63946; --gray:#6b7280;
+    --border:#d1d5db; --row-alt:#f8f9fb;
+    --s1:#fff7ed; --s2:#eff6ff; --s3:#f0fdf4; --s4:#fdf4ff;
+    --font:'Sarabun',sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);background:var(--bg);color:var(--primary);font-size:14px;line-height:1.5;}
+  .page{max-width:1150px;margin:0 auto;padding:20px 16px;}
+
+  /* HEADER */
+  .header{background:var(--primary);color:white;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .header-left{display:flex;align-items:center;gap:14px;}
+  .battery-icon{width:44px;height:44px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .header h1{font-size:19px;font-weight:800;}
+  .header .subtitle{font-size:11px;color:#94a3b8;font-family:var(--mono);margin-top:2px;}
+  .header-fields{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+  .header-field{display:flex;flex-direction:column;gap:4px;}
+  .header-field label{font-size:10px;color:#94a3b8;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;}
+  .header-field input,.header-field select{
+    background:#1e3a5f !important;border:2px solid #3b6ea5;
+    color:#fff !important;-webkit-text-fill-color:#fff !important;
+    border-radius:6px;padding:7px 10px;font-size:13px;
+    font-family:var(--font);font-weight:700;width:140px;text-align:center;
+    outline:none;transition:border-color .2s;color-scheme:dark;cursor:pointer;
+  }
+  .header-field input:focus,.header-field select:focus{border-color:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.3);}
+  .header-field input::placeholder{color:rgba(255,255,255,.4);-webkit-text-fill-color:rgba(255,255,255,.4);font-weight:400;}
+
+  /* CYCLE INDICATOR */
+  .cycle-bar{
+    background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:8px;
+    padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    margin-bottom:2px;
+  }
+  .cycle-bar-label{font-size:13px;font-weight:700;color:#0369a1;}
+  .cycle-num{
+    background:#0a2540;color:white;font-family:var(--mono);font-weight:800;
+    font-size:18px;padding:4px 16px;border-radius:6px;min-width:44px;text-align:center;
+  }
+  .cycle-bar-note{font-size:12px;color:#0369a1;font-family:var(--mono);}
+
+  /* SECTIONS */
+  .form-body{background:var(--white);border-radius:0 0 12px 12px;border:1px solid var(--border);border-top:none;overflow:hidden;}
+  .section{border-bottom:2px solid var(--bg);}
+  .section:last-child{border-bottom:none;}
+  .section-header{padding:13px 22px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;}
+  .section-header:hover{filter:brightness(.97);}
+  .s1 .section-header{background:var(--s1);}
+  .s2 .section-header{background:var(--s2);}
+  .s3 .section-header{background:var(--s3);}
+  .s4 .section-header{background:var(--s4);}
+  .section-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:white;flex-shrink:0;}
+  .s1 .section-badge{background:var(--accent);}
+  .s2 .section-badge{background:var(--accent2);}
+  .s3 .section-badge{background:var(--success);}
+  .s4 .section-badge{background:#7c3aed;}
+  .section-title{font-size:15px;font-weight:700;flex:1;}
+  .section-note{font-size:11px;color:var(--gray);font-family:var(--mono);}
+  .toggle-icon{color:var(--gray);font-size:18px;transition:transform .3s;}
+  .collapsed .toggle-icon{transform:rotate(-90deg);}
+  .section-content{padding:0 18px 18px;}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;margin-top:12px;}
+  table{width:100%;border-collapse:collapse;min-width:500px;}
+  th{background:var(--primary);color:white;padding:8px;text-align:center;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid rgba(255,255,255,.1);}
+  td{padding:4px 3px;border:1px solid var(--border);vertical-align:middle;}
+  tr:nth-child(even) td{background:var(--row-alt);}
+  tr:hover td{background:#e8f4fd;}
+  input[type=text],input[type=number],input[type=date],input[type=time]{width:100%;border:none;background:transparent;font-family:var(--font);font-size:13px;color:var(--primary);padding:3px 4px;outline:none;}
+  input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[type=time]:focus{background:#fff9c4;border-radius:3px;}
+  select{width:100%;border:none;background:transparent;font-family:var(--font);font-size:13px;color:var(--primary);padding:3px 4px;outline:none;cursor:pointer;}
+  select:focus{background:#fff9c4;border-radius:3px;}
+  .auto-calc{background:#f0fdf4;color:var(--success);font-weight:700;font-family:var(--mono);font-size:12px;text-align:center;padding:5px 4px;border-radius:3px;}
+
+  /* CHECK SHEET */
+  .checksheet-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-top:13px;}
+  @media(max-width:768px){.checksheet-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:500px){.checksheet-grid{grid-template-columns:1fr;}}
+  .check-box{border:1.5px solid var(--border);border-radius:8px;overflow:hidden;}
+  .check-box-header{background:#7c3aed;color:white;padding:8px 13px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;}
+  .check-box-body{padding:7px 11px;}
+  .check-item{display:flex;align-items:center;gap:9px;padding:5px 3px;border-radius:5px;cursor:pointer;transition:background .15s;}
+  .check-item:hover{background:#f3f0ff;}
+  .check-item input[type=checkbox]{width:17px;height:17px;accent-color:#7c3aed;cursor:pointer;flex-shrink:0;}
+  .check-item label{cursor:pointer;font-size:13.5px;user-select:none;flex:1;}
+  .check-other-input{flex:1;border:none;border-bottom:1.5px dashed var(--border);background:transparent;font-family:var(--font);font-size:13px;padding:2px 4px;outline:none;}
+  .check-other-input:focus{border-bottom-color:#7c3aed;}
+  .check-note{margin-top:9px;font-size:11px;color:#7c3aed;font-family:var(--mono);}
+
+  /* FOOTER */
+  .form-actions{display:flex;gap:10px;justify-content:flex-end;padding:16px 22px;background:var(--bg);border-radius:0 0 12px 12px;flex-wrap:wrap;align-items:center;}
+  .form-actions-left{flex:1;font-size:12px;color:var(--gray);font-family:var(--mono);}
+  .btn{padding:10px 22px;border-radius:7px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+  .btn-secondary{background:white;border:1.5px solid var(--border);color:var(--primary);}
+  .btn-secondary:hover{border-color:var(--primary);}
+  .btn-primary{background:var(--primary);color:white;}
+  .btn-primary:hover{background:#1a3a5c;}
+  .btn-print{background:var(--accent);color:white;}
+  .btn-print:hover{background:#e55a00;}
+
+  /* CHECK SECTION TOGGLE */
+  .check-toggle{
+    display:flex;align-items:center;gap:10px;margin-top:13px;
+    padding:10px 15px;background:#fdf4ff;border:1.5px solid #e9d5ff;
+    border-radius:8px;cursor:pointer;user-select:none;
+  }
+  .check-toggle input[type=checkbox]{width:18px;height:18px;accent-color:#7c3aed;cursor:pointer;}
+  .check-toggle label{font-size:13px;font-weight:700;color:#7c3aed;cursor:pointer;}
+  #checksheet-body{display:none;}
+
+  @media print{
+    body{background:white;font-size:11px;}
+    .page{padding:0;max-width:100%;}
+    .form-actions,.toggle-icon{display:none;}
+    th{font-size:10px;padding:5px;}
+    td{padding:2px;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="battery-icon">🔋</div>
+    <div>
+      <h1>Battery Daily Log Sheet</h1>
+      <div class="subtitle">บันทึกประจำวัน — Forklift Battery Monitoring</div>
+    </div>
+  </div>
+  <div class="header-fields">
+    <div class="header-field">
+      <label>วันที่</label>
+      <input type="date" id="global-date" onchange="onDateChange(); syncRowDates();" />
+    </div>
+    <div class="header-field">
+      <label>Shift</label>
+      <select id="global-shift" style="width:110px">
+        <option value="">— เลือก —</option>
+        <option>Day</option>
+        <option>Night</option>
+      </select>
+    </div>
+    <div class="header-field">
+      <label>ผู้บันทึก</label>
+      <input type="text" id="global-operator" placeholder="ชื่อ Operator" />
+    </div>
+    <div class="header-field">
+      <label>DC</label>
+      <input type="text" id="global-dc" placeholder="เช่น DC BB" style="width:100px" />
+    </div>
+    <div class="header-field">
+      <label>Auto Filling</label>
+      <select id="global-af" style="width:155px">
+        <option value="">— เลือก —</option>
+        <option>ไม่ได้ใช้</option>
+        <option>GS 24V</option>
+        <option>GS 48V</option>
+        <option>Smart/Jung 24V</option>
+        <option>Smart/Jung 48V</option>
+      </select>
+    </div>
+    <div class="header-field">
+      <label>รถ Model</label>
+      <input type="text" id="global-model" placeholder="เช่น BT : OSE250" style="width:155px" />
+    </div>
+  </div>
+</div>
+
+<div class="form-body">
+
+<!-- CYCLE BAR -->
+<div style="padding:14px 20px 0;">
+  <div class="cycle-bar">
+    <span class="cycle-bar-label">กำลังบันทึก Cycle</span>
+    <span class="cycle-num" id="cycle-display">1</span>
+    <span class="cycle-bar-note">กรอกข้อมูล 1 cycle แล้วกด "ส่ง Cycle นี้" — ระบบจะล้างฟอร์มและเพิ่ม Cycle ให้อัตโนมัติ</span>
+  </div>
+</div>
+
+<!-- SECTION 1 -->
+<div class="section s1" id="sec1">
+  <div class="section-header" onclick="toggleSection('sec1')">
+    <div class="section-badge">1</div>
+    <div class="section-title">Operation + Water Filling</div>
+    <div class="section-note">เวลาเติมน้ำ</div>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="section-content">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:112px">วันที่</th>
+            <th style="width:100px">เวลาเริ่มเติม</th>
+            <th style="width:112px">เวลาเติมเสร็จ</th>
+            <th style="width:115px">Filling Time (min)</th>
+            <th style="width:105px">ครบทุก cell</th>
+            <th style="width:110px">น้ำล้น (Overflow)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody1">
+          <tr>
+            <td><input type="date" id="date1" /></td>
+            <td><input type="time" class="t1s" /></td>
+            <td><input type="time" class="t1e" /></td>
+            <td><div class="auto-calc fr">—</div></td>
+            <td style="text-align:center"><select><option value="">—</option><option>ใช่</option><option>ไม่ใช่</option></select></td>
+            <td style="text-align:center"><select><option value="">—</option><option>ใช่</option><option>ไม่ใช่</option></select></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2 -->
+<div class="section s2" id="sec2">
+  <div class="section-header" onclick="toggleSection('sec2')">
+    <div class="section-badge">2</div>
+    <div class="section-title">Battery Performance</div>
+    <div class="section-note">เวลาใช้งานและชาร์จ</div>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="section-content">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:112px">วันที่</th>
+            <th style="width:110px">เวลาเริ่มใช้งาน</th>
+            <th style="width:118px">เวลาใช้งานเสร็จ</th>
+            <th style="width:115px">Usage Time (hr)</th>
+            <th style="width:110px">เวลาเริ่มชาร์จ</th>
+            <th style="width:115px">เวลาชาร์จเสร็จ</th>
+            <th style="width:115px">Charge Time (hr)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody2">
+          <tr>
+            <td><input type="date" id="date2" /></td>
+            <td><input type="time" class="t2us" /></td>
+            <td><input type="time" class="t2ue" /></td>
+            <td><div class="auto-calc ur">—</div></td>
+            <td><input type="time" class="t2cs" /></td>
+            <td><input type="time" class="t2ce" /></td>
+            <td><div class="auto-calc cr">—</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3 -->
+<div class="section s3" id="sec3">
+  <div class="section-header" onclick="toggleSection('sec3')">
+    <div class="section-badge">3</div>
+    <div class="section-title">Battery Health</div>
+    <div class="section-note">ประเมินเชิงคุณภาพ</div>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="section-content">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:112px">วันที่</th>
+            <th>ระดับน้ำก่อนเติม</th>
+            <th>ระดับน้ำหลังเติม</th>
+            <th>ความสม่ำเสมอ cell (1-5)</th>
+            <th style="min-width:170px">หมายเหตุ</th>
+          </tr>
+        </thead>
+        <tbody id="tbody3">
+          <tr>
+            <td><input type="date" id="date3" /></td>
+            <td><select><option value="">—</option><option>ต่ำ</option><option>ปกติ</option><option>สูง</option></select></td>
+            <td><select><option value="">—</option><option>ต่ำ</option><option>ปกติ</option><option>สูง</option></select></td>
+            <td style="text-align:center"><select><option value="">—</option><option>1 — แย่มาก</option><option>2 — แย่</option><option>3 — ปานกลาง</option><option>4 — ดี</option><option>5 — ดีมาก</option></select></td>
+            <td><input type="text" placeholder="หมายเหตุ..." /></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4 — เฉพาะ Cycle สุดท้าย -->
+<div class="section s4" id="sec4">
+  <div class="section-header" onclick="toggleSection('sec4')">
+    <div class="section-badge">4</div>
+    <div class="section-title">Check Sheet ประจำวัน</div>
+    <div class="section-note">ตรวจที่ Cycle สุดท้ายของวันเท่านั้น</div>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="section-content">
+
+    <div class="check-toggle" onclick="toggleCheckSheet()">
+      <input type="checkbox" id="is-last-cycle" />
+      <label for="is-last-cycle">✅ นี่คือ Cycle สุดท้ายของวัน — เปิดกรอก Check Sheet</label>
+    </div>
+
+    <div id="checksheet-body">
+      <div style="margin-top:10px;padding:10px 15px;background:#faf5ff;border-radius:8px;border:1px solid #e9d5ff;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:16px">⏰</span>
+        <span style="font-size:13px;color:#7c3aed;font-weight:700;">เวลาตรวจ Cycle สุดท้าย</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+          <label style="font-size:12px;color:#7c3aed;font-weight:600;">เวลาตรวจ:</label>
+          <input type="time" id="check-time" style="border:1.5px solid #e9d5ff;border-radius:6px;padding:6px 10px;font-family:var(--font);font-size:14px;outline:none;background:white;" />
+        </div>
+      </div>
+
+      <div class="checksheet-grid">
+        <div class="check-box">
+          <div class="check-box-header">🔍 1. สภาพตัวถังแบตเตอรี่</div>
+          <div class="check-box-body">
+            <div class="check-item"><input type="checkbox" id="c1a"><label for="c1a">ปกติ</label></div>
+            <div class="check-item"><input type="checkbox" id="c1b"><label for="c1b">บวม</label></div>
+            <div class="check-item"><input type="checkbox" id="c1c"><label for="c1c">ผุ / แตกร้าว</label></div>
+            <div class="check-item"><input type="checkbox" id="c1d"><label for="c1d">มีคราบกรด</label></div>
+          </div>
+        </div>
+        <div class="check-box">
+          <div class="check-box-header">⚡ 2. สภาพขั้วแบตเตอรี่</div>
+          <div class="check-box-body">
+            <div class="check-item"><input type="checkbox" id="c2a"><label for="c2a">ปกติ</label></div>
+            <div class="check-item"><input type="checkbox" id="c2b"><label for="c2b">คราบขาว / สนิม</label></div>
+            <div class="check-item"><input type="checkbox" id="c2c"><label for="c2c">หลวม</label></div>
+            <div class="check-item"><input type="checkbox" id="c2d"><label for="c2d">ร้อนผิดปกติ</label></div>
+          </div>
+        </div>
+        <div class="check-box">
+          <div class="check-box-header">💧 3. สภาพอุปกรณ์ Auto-filling</div>
+          <div class="check-box-body">
+            <div class="check-item"><input type="checkbox" id="c3na"><label for="c3na">ไม่ได้ใช้ Auto-filling</label></div>
+            <div class="check-item"><input type="checkbox" id="c3a"><label for="c3a">ปกติ</label></div>
+            <div class="check-item"><input type="checkbox" id="c3b"><label for="c3b">สีเปลี่ยน / ขุ่น</label></div>
+            <div class="check-item"><input type="checkbox" id="c3c"><label for="c3c">สายรั่ว / แตก</label></div>
+            <div class="check-item"><input type="checkbox" id="c3d"><label for="c3d">ข้อต่อหลวม</label></div>
+          </div>
+        </div>
+        <div class="check-box">
+          <div class="check-box-header">🚿 4. การทำงานของระบบเติมน้ำ</div>
+          <div class="check-box-body">
+            <div class="check-item"><input type="checkbox" id="c4na"><label for="c4na">ไม่ได้ใช้ Auto-filling</label></div>
+            <div class="check-item"><input type="checkbox" id="c4a"><label for="c4a">เติมปกติ</label></div>
+            <div class="check-item"><input type="checkbox" id="c4b"><label for="c4b">น้ำไม่เข้า</label></div>
+            <div class="check-item"><input type="checkbox" id="c4c"><label for="c4c">เติมไม่เท่ากัน</label></div>
+            <div class="check-item"><input type="checkbox" id="c4d"><label for="c4d">น้ำล้น</label></div>
+          </div>
+        </div>
+        <div class="check-box" style="grid-column:span 2;">
+          <div class="check-box-header">⚠️ 5. อาการผิดปกติอื่นๆ</div>
+          <div class="check-box-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+            <div class="check-item"><input type="checkbox" id="c5a"><label for="c5a">ไม่มี</label></div>
+            <div class="check-item"><input type="checkbox" id="c5b"><label for="c5b">ใช้งานสั้นลง</label></div>
+            <div class="check-item"><input type="checkbox" id="c5c"><label for="c5c">ชาร์จนานผิดปกติ</label></div>
+            <div class="check-item"><input type="checkbox" id="c5d"><label for="c5d">แบตร้อน / มีกลิ่นไหม้</label></div>
+            <div class="check-item" style="grid-column:span 2;">
+              <input type="checkbox" id="c5e">
+              <label for="c5e" style="white-space:nowrap;">อื่นๆ (ระบุ):</label>
+              <input type="text" class="check-other-input" placeholder="ระบุอาการ..." />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="check-note">* หากพบความผิดปกติ ให้แจ้ง Supervisor ทันที</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /form-body -->
+
+<div class="form-actions">
+  <div class="form-actions-left" id="sent-summary"></div>
+  <button class="btn btn-secondary" onclick="window.print()">🖨 พิมพ์</button>
+  <button class="btn btn-primary" onclick="submitCycle()">✔ ส่ง Cycle นี้</button>
+</div>
+
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby058qYqDN9yB0dtn9ZJk_f8Cnd2RE-tOxhy82C0xi-oylQkKMwSeDMBvaxc7E-E8XCRA/exec';
+const today = new Date().toISOString().split('T')[0];
+let currentCycle = 1;
+let sentCount = 0;
+
+// ===== RESET CYCLE WHEN FORM DATE CHANGES =====
+function onDateChange() {
+  const newDate = document.getElementById('global-date').value;
+  const storedDate = localStorage.getItem('battery_log_date');
+  if (storedDate !== newDate) {
+    currentCycle = 1;
+    sentCount = 0;
+    localStorage.setItem('battery_log_date', newDate);
+    localStorage.setItem('battery_log_cycle', '1');
+    localStorage.setItem('battery_log_sent', '0');
+    updateCycleDisplay();
+    if (storedDate) showToast('🌅 เปลี่ยนวันใหม่ — เริ่ม Cycle 1 ใหม่');
+  }
+}
+
+// โหลด cycle ของวันนี้จาก localStorage
+function initCycle() {
+  const storedDate = localStorage.getItem('battery_log_date');
+  const formDate = document.getElementById('global-date').value;
+  if (storedDate === formDate) {
+    currentCycle = parseInt(localStorage.getItem('battery_log_cycle') || '1');
+    sentCount = parseInt(localStorage.getItem('battery_log_sent') || '0');
+  } else {
+    currentCycle = 1;
+    sentCount = 0;
+    localStorage.setItem('battery_log_date', formDate);
+    localStorage.setItem('battery_log_cycle', '1');
+    localStorage.setItem('battery_log_sent', '0');
+  }
+}
+
+// Set dates
+document.getElementById('global-date').value = today;
+syncRowDates();
+document.getElementById('global-date').addEventListener('change', onDateChange);
+initCycle();
+
+// ===== CYCLE DISPLAY =====
+function updateCycleDisplay() {
+  document.getElementById('cycle-display').textContent = currentCycle;
+  document.getElementById('sent-summary').textContent =
+    sentCount > 0 ? `✅ ส่งไปแล้ว ${sentCount} cycle วันนี้` : '';
+}
+
+// ===== CHECK SHEET TOGGLE =====
+function toggleCheckSheet() {
+  const cb = document.getElementById('is-last-cycle');
+  cb.checked = !cb.checked;
+  document.getElementById('checksheet-body').style.display = cb.checked ? 'block' : 'none';
+}
+
+// ===== SYNC ROW DATES =====
+function syncRowDates() {
+  const val = document.getElementById('global-date').value;
+  ['date1','date2','date3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+}
+
+// ===== TIME CALC =====
+function calcTimeDiff(s, e, unit) {
+  if (!s || !e) return '';
+  const [sh,sm] = s.split(':').map(Number);
+  const [eh,em] = e.split(':').map(Number);
+  let diff = (eh*60+em)-(sh*60+sm);
+  if (diff < 0) diff += 1440;
+  return unit === 'hr' ? (diff/60).toFixed(2) : diff;
+}
+
+document.addEventListener('change', function(e) {
+  const el = e.target; const row = el.closest('tr'); if (!row) return;
+  if (el.classList.contains('t1s') || el.classList.contains('t1e')) {
+    const r = calcTimeDiff(row.querySelector('.t1s').value, row.querySelector('.t1e').value, 'min');
+    row.querySelector('.fr').textContent = r !== '' ? r+' min' : '—';
+  }
+  if (el.classList.contains('t2us') || el.classList.contains('t2ue')) {
+    const r = calcTimeDiff(row.querySelector('.t2us').value, row.querySelector('.t2ue').value, 'hr');
+    row.querySelector('.ur').textContent = r !== '' ? r+' hr' : '—';
+  }
+  if (el.classList.contains('t2cs') || el.classList.contains('t2ce')) {
+    const r = calcTimeDiff(row.querySelector('.t2cs').value, row.querySelector('.t2ce').value, 'hr');
+    row.querySelector('.cr').textContent = r !== '' ? r+' hr' : '—';
+  }
+});
+
+// ===== TOGGLE SECTION =====
+function toggleSection(id) {
+  const sec = document.getElementById(id);
+  const content = sec.querySelector('.section-content');
+  const header = sec.querySelector('.section-header');
+  if (content.style.display === 'none') { content.style.display=''; header.classList.remove('collapsed'); }
+  else { content.style.display='none'; header.classList.add('collapsed'); }
+}
+
+// ===== COLLECT DATA =====
+function getRow(tbodyId) {
+  const tr = document.querySelector('#'+tbodyId+' tr');
+  if (!tr) return [];
+  const vals = [];
+  tr.querySelectorAll('td').forEach(td => {
+    const ac = td.querySelector('.auto-calc');
+    if (ac) { vals.push(ac.textContent.trim() === '—' ? '' : ac.textContent.trim()); return; }
+    const inp = td.querySelector('input,select');
+    if (inp) vals.push(inp.value || '');
+  });
+  return vals;
+}
+
+function getCheckData(cycle) {
+  const map = [
+    ['c1a','ปกติ','ตัวถัง'],['c1b','บวม','ตัวถัง'],['c1c','ผุ/แตกร้าว','ตัวถัง'],['c1d','มีคราบกรด','ตัวถัง'],
+    ['c2a','ปกติ','ขั้วแบต'],['c2b','คราบขาว/สนิม','ขั้วแบต'],['c2c','หลวม','ขั้วแบต'],['c2d','ร้อนผิดปกติ','ขั้วแบต'],
+    ['c3na','ไม่ได้ใช้ Auto-filling','อุปกรณ์AF'],['c3a','ปกติ','อุปกรณ์AF'],['c3b','สีเปลี่ยน/ขุ่น','อุปกรณ์AF'],['c3c','สายรั่ว/แตก','อุปกรณ์AF'],['c3d','ข้อต่อหลวม','อุปกรณ์AF'],
+    ['c4na','ไม่ได้ใช้ Auto-filling','ระบบเติมน้ำ'],['c4a','เติมปกติ','ระบบเติมน้ำ'],['c4b','น้ำไม่เข้า','ระบบเติมน้ำ'],['c4c','เติมไม่เท่ากัน','ระบบเติมน้ำ'],['c4d','น้ำล้น','ระบบเติมน้ำ'],
+    ['c5a','ไม่มี','ผิดปกติ'],['c5b','ใช้งานสั้นลง','ผิดปกติ'],['c5c','ชาร์จนานผิดปกติ','ผิดปกติ'],['c5d','แบตร้อน/มีกลิ่นไหม้','ผิดปกติ'],['c5e','อื่นๆ','ผิดปกติ'],
+  ];
+  const g = {};
+  map.forEach(([id,label,group]) => {
+    const el = document.getElementById(id);
+    if (el && el.checked) { g[group]=g[group]||[]; g[group].push(label); }
+  });
+  const other = document.querySelector('.check-other-input')?.value || '';
+  return [[
+    document.getElementById('global-date').value,
+    document.getElementById('global-shift').value,
+    document.getElementById('global-operator').value,
+    document.getElementById('global-dc').value,
+    document.getElementById('global-af').value,
+    document.getElementById('global-model').value,
+    cycle,
+    document.getElementById('check-time').value,
+    (g['ตัวถัง']||[]).join(', '),
+    (g['ขั้วแบต']||[]).join(', '),
+    (g['อุปกรณ์AF']||[]).join(', '),
+    (g['ระบบเติมน้ำ']||[]).join(', '),
+    (g['ผิดปกติ']||[]).join(', ')+(other?' / '+other:''),
+  ]];
+}
+
+// ===== RESET FORM =====
+function resetForm() {
+  document.querySelectorAll('#tbody1 input, #tbody2 input, #tbody3 input').forEach(el => {
+    if (el.type !== 'date') el.value = '';
+  });
+  syncRowDates();
+  document.querySelectorAll('#tbody1 select, #tbody2 select, #tbody3 select').forEach(el => el.selectedIndex = 0);
+  document.querySelectorAll('.auto-calc').forEach(el => el.textContent = '—');
+  document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
+  document.getElementById('check-time').value = '';
+  document.getElementById('checksheet-body').style.display = 'none';
+  document.getElementById('global-operator').value = '';
+}
+
+// ===== TOAST =====
+function showToast(msg, type='success') {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div'); t.id='toast';
+    t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);padding:13px 26px;border-radius:10px;font-family:var(--font);font-size:14px;font-weight:600;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.18);transition:opacity .4s;white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  t.style.background = type==='success'?'#2d6a4f':'#e63946';
+  t.style.color='white'; t.textContent=msg; t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0',3500);
+}
+
+function setLoading(on) {
+  let ov=document.getElementById('lov');
+  if(!ov){
+    ov=document.createElement('div');ov.id='lov';
+    ov.innerHTML='<div style="font-size:34px">⏳</div><div>กำลังส่งข้อมูล...</div>';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(10,37,64,.55);display:flex;align-items:center;justify-content:center;z-index:9998;font-family:var(--font);color:white;font-size:17px;font-weight:700;flex-direction:column;gap:13px;';
+    document.body.appendChild(ov);
+  }
+  ov.style.display=on?'flex':'none';
+}
+
+async function sendSheet(sheet,headers,rows){
+  if(!rows.length||rows.every(r=>r.slice(1).every(v=>!v||v==='—')))return{skipped:true};
+  const res=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({sheet,headers,rows})});
+  return res.json();
+}
+
+// ===== VALIDATION =====
+function validate() {
+  const missing = [];
+
+  // Header fields
+  if (!document.getElementById('global-date').value) missing.push('วันที่');
+  if (!document.getElementById('global-shift').value) missing.push('Shift');
+  if (!document.getElementById('global-operator').value.trim()) missing.push('ผู้บันทึก');
+  if (!document.getElementById('global-dc').value.trim()) missing.push('DC');
+  if (!document.getElementById('global-af').value) missing.push('Auto Filling');
+  if (!document.getElementById('global-model').value.trim()) missing.push('รถ Model');
+
+  // Section 1 — Water Filling
+  const tr1 = document.querySelector('#tbody1 tr');
+  if (tr1) {
+    if (!tr1.querySelector('.t1s').value) missing.push('Section 1: เวลาเริ่มเติม');
+    if (!tr1.querySelector('.t1e').value) missing.push('Section 1: เวลาเติมเสร็จ');
+    const sels1 = tr1.querySelectorAll('select');
+    if (!sels1[0].value) missing.push('Section 1: ครบทุก cell');
+    if (!sels1[1].value) missing.push('Section 1: Overflow');
+  }
+
+  // Section 2 — Performance
+  const tr2 = document.querySelector('#tbody2 tr');
+  if (tr2) {
+    if (!tr2.querySelector('.t2us').value) missing.push('Section 2: เวลาเริ่มใช้งาน');
+    if (!tr2.querySelector('.t2ue').value) missing.push('Section 2: เวลาใช้งานเสร็จ');
+    if (!tr2.querySelector('.t2cs').value) missing.push('Section 2: เวลาเริ่มชาร์จ');
+    if (!tr2.querySelector('.t2ce').value) missing.push('Section 2: เวลาชาร์จเสร็จ');
+  }
+
+  // Section 3 — Battery Health
+  const tr3 = document.querySelector('#tbody3 tr');
+  if (tr3) {
+    const sels3 = tr3.querySelectorAll('select');
+    if (!sels3[0].value) missing.push('Section 3: ระดับน้ำก่อนเติม');
+    if (!sels3[1].value) missing.push('Section 3: ระดับน้ำหลังเติม');
+    if (!sels3[2].value) missing.push('Section 3: ความสม่ำเสมอ cell');
+  }
+
+  // Section 4 — Check Sheet (เฉพาะถ้าติ๊กว่าเป็น cycle สุดท้าย)
+  const isLast = document.getElementById('is-last-cycle').checked;
+  if (isLast) {
+    if (!document.getElementById('check-time').value) missing.push('Section 4: เวลาตรวจ');
+    const groups = ['ตัวถัง','ขั้วแบต','อุปกรณ์AF','ระบบเติมน้ำ','ผิดปกติ'];
+    const groupMap = {
+      'ตัวถัง':['c1a','c1b','c1c','c1d'],
+      'ขั้วแบต':['c2a','c2b','c2c','c2d'],
+      'อุปกรณ์AF':['c3na','c3a','c3b','c3c','c3d'],
+      'ระบบเติมน้ำ':['c4na','c4a','c4b','c4c','c4d'],
+      'ผิดปกติ':['c5a','c5b','c5c','c5d','c5e'],
+    };
+    const groupLabel = {
+      'ตัวถัง':'Section 4: สภาพตัวถัง',
+      'ขั้วแบต':'Section 4: สภาพขั้วแบต',
+      'อุปกรณ์AF':'Section 4: สภาพอุปกรณ์ Auto-filling',
+      'ระบบเติมน้ำ':'Section 4: การทำงานระบบเติมน้ำ',
+      'ผิดปกติ':'Section 4: อาการผิดปกติ',
+    };
+    groups.forEach(g => {
+      const checked = groupMap[g].some(id => document.getElementById(id)?.checked);
+      if (!checked) missing.push(groupLabel[g]);
+    });
+  }
+
+  return missing;
+}
+
+// ===== SUBMIT ONE CYCLE =====
+async function submitCycle() {
+  const missing = validate();
+  if (missing.length > 0) {
+    alert('⚠️ กรุณากรอกข้อมูลให้ครบก่อนส่ง:\n\n• ' + missing.join('\n• '));
+    return;
+  }
+
+  const shift = document.getElementById('global-shift').value;
+  const dc = document.getElementById('global-dc').value;
+  const af = document.getElementById('global-af').value;
+  const model = document.getElementById('global-model').value;
+  const cycle = currentCycle;
+  const addMeta = row => [...row, cycle, shift, operator, dc, af, model];
+
+  const wfH=['วันที่','เวลาเริ่มเติม','เวลาเติมเสร็จ','Filling Time (min)','ครบทุก cell','Overflow','Cycle No.','Shift','ผู้บันทึก','DC','Auto Filling','รถ Model'];
+  const pfH=['วันที่','เวลาเริ่มใช้งาน','เวลาใช้งานเสร็จ','Usage Time (hr)','เวลาเริ่มชาร์จ','เวลาชาร์จเสร็จ','Charge Time (hr)','Cycle No.','Shift','ผู้บันทึก','DC','Auto Filling','รถ Model'];
+  const bhH=['วันที่','ระดับน้ำก่อนเติม','ระดับน้ำหลังเติม','ความสม่ำเสมอ cell','หมายเหตุ','Cycle No.','Shift','ผู้บันทึก','DC','Auto Filling','รถ Model'];
+  const csH=['วันที่','Shift','ผู้บันทึก','DC','Auto Filling','รถ Model','Cycle No.','เวลาตรวจ','สภาพตัวถัง','ขั้วแบต','อุปกรณ์ AF','ระบบเติมน้ำ','ผิดปกติอื่นๆ'];
+
+  const wfRow = getRow('tbody1');
+  const pfRow = getRow('tbody2');
+  const bhRow = getRow('tbody3');
+  const isLastCycle = document.getElementById('is-last-cycle').checked;
+
+  setLoading(true);
+  try {
+    const sends = [
+      sendSheet('WaterFilling', wfH, wfRow.length ? [addMeta(wfRow)] : []),
+      sendSheet('Performance',  pfH, pfRow.length ? [addMeta(pfRow)] : []),
+      sendSheet('BatteryHealth',bhH, bhRow.length ? [addMeta(bhRow)] : []),
+    ];
+    if (isLastCycle) sends.push(sendSheet('CheckSheet', csH, getCheckData(cycle)));
+
+    const results = await Promise.all(sends);
+    setLoading(false);
+
+    if (results.every(r => r.skipped || r.status === 'success')) {
+      sentCount++;
+      currentCycle++;
+      localStorage.setItem('battery_log_cycle', currentCycle);
+      localStorage.setItem('battery_log_sent', sentCount);
+      updateCycleDisplay();
+      showToast(`✅ ส่ง Cycle ${cycle} เรียบร้อย!${isLastCycle ? ' (พร้อม Check Sheet)' : ''}`);
+      setTimeout(() => resetForm(), 600);
+    } else {
+      showToast('❌ ส่งไม่สำเร็จ — ลองใหม่อีกครั้ง', 'error');
+    }
+  } catch(err) {
+    setLoading(false);
+    showToast('❌ เชื่อมต่อไม่ได้: '+err.message, 'error');
+  }
+}
+
+updateCycleDisplay();
+</script>
+</body>
+</html>
